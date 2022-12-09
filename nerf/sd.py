@@ -107,10 +107,18 @@ class StableDiffusion(nn.Module):
         # clip grad for stable training?
         # grad = grad.clamp(-10, 10)
         grad = torch.nan_to_num(grad)
+        grad = grad @ torch.tensor([
+                    #   R        G        B
+                    [0.298, 0.207, 0.208],  # L1
+                    [0.187, 0.286, 0.173],  # L2
+                    [-0.158, 0.189, 0.264],  # L3
+                    [-0.184, -0.271, -0.473],  # L4
+                                   ]).to(grad)
+        grad = F.interpolate(grad, (512, 512), mode='bilinear', align_corners=False)
 
         # manually backward, since we omitted an item in grad and cannot simply autodiff.
         # _t = time.time()
-        latents.backward(gradient=grad, retain_graph=True)
+        pred_rgb_512.backward(gradient=grad, retain_graph=True)
         # torch.cuda.synchronize(); print(f'[TIME] guiding: backward {time.time() - _t:.4f}s')
 
         return 0 # dummy loss value
