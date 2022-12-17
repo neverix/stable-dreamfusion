@@ -70,9 +70,10 @@ class StableDiffusion(nn.Module):
 
     def train_step(self, text_embeddings, pred_rgb, guidance_scale=100):
         
-        # interp to 512x512 to be fed into vae.
+        # interp to 512x512 to be fed into vae and to 64x64 for gradients.
 
         # _t = time.time()
+        pred_rgb_64 = F.interpolate(pred_rgb, (64, 64), mode='bilinear', align_corners=False)
         pred_rgb_512 = F.interpolate(pred_rgb, (512, 512), mode='bilinear', align_corners=False)
         # torch.cuda.synchronize(); print(f'[TIME] guiding: interp {time.time() - _t:.4f}s')
 
@@ -107,18 +108,14 @@ class StableDiffusion(nn.Module):
         # clip grad for stable training?
         # grad = grad.clamp(-10, 10)
         grad = torch.nan_to_num(grad)
-        grad = grad @ torch.tensor([
-                    #   R        G        B
-                    [0.298, 0.207, 0.208],  # L1
-                    [0.187, 0.286, 0.173],  # L2
-                    [-0.158, 0.189, 0.264],  # L3
-                    [-0.184, -0.271, -0.473],  # L4
-                                   ]).to(grad)
-        grad = F.interpolate(grad, (512, 512), mode='bilinear', align_corners=False)
+        grad = grad @ torch.tensor([[ 0.0606,  0.0359,  0.0247],
+                                    [ 0.0224,  0.0474,  0.0461],
+                                    [-0.0226,  0.0151,  0.0262],
+                                    [-0.0363, -0.0372, -0.0466]]).to(grad)
 
         # manually backward, since we omitted an item in grad and cannot simply autodiff.
         # _t = time.time()
-        pred_rgb_512.backward(gradient=grad, retain_graph=True)
+        pred_rgb_64.backward(gradient=grad, retain_graph=True)
         # torch.cuda.synchronize(); print(f'[TIME] guiding: backward {time.time() - _t:.4f}s')
 
         return 0 # dummy loss value
