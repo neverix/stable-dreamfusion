@@ -107,11 +107,11 @@ class StableDiffusion(nn.Module):
 
         # clip grad for stable training?
         # grad = grad.clamp(-10, 10)
-        grad = torch.nan_to_num(grad)
-        grad = grad @ torch.tensor([[ 0.0606,  0.0359,  0.0247],
+        grad = torch.nan_to_num(grad).reshape(-1, 4, 64, 64)
+        grad = (grad.permute(0, 2, 3, 1) @ torch.tensor([[ 0.0606,  0.0359,  0.0247],
                                     [ 0.0224,  0.0474,  0.0461],
                                     [-0.0226,  0.0151,  0.0262],
-                                    [-0.0363, -0.0372, -0.0466]]).to(grad)
+                                    [-0.0363, -0.0372, -0.0466]]).to(grad)).permute(0, 3, 1, 2)
 
         # manually backward, since we omitted an item in grad and cannot simply autodiff.
         # _t = time.time()
