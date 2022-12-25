@@ -112,7 +112,7 @@ class StableDiffusion(nn.Module):
                                                          [ 0.04895546,  0.04370191,  0.03260002],
                                                          [ 0.00537032,  0.01168049,  0.01997592],
                                                          [-0.05284063, -0.05522541, -0.06234025]]).to(grad)
-                + torch.tensor([ 0.02123729, -0.05828783, -0.16855426]).to(grad).unsqueeze(-1).unsqueeze(-1)).permute(0, 3, 1, 2)
+                + torch.tensor([ 0.02123729, -0.05828783, -0.16855426]).to(grad)).permute(0, 3, 1, 2)
 
         # manually backward, since we omitted an item in grad and cannot simply autodiff.
         # _t = time.time()
