@@ -117,6 +117,7 @@ class StableDiffusion(nn.Module):
         # _t = time.time()
         pred_rgb_64.backward(gradient=grad, retain_graph=True)
         # torch.cuda.synchronize(); print(f'[TIME] guiding: backward {time.time() - _t:.4f}s')
+        (pred_rgb_64 * 0.1 * torch.randn_like(pred_rgb_64)).pow(2).mean().backward()
 
         return 0 # dummy loss value
 
